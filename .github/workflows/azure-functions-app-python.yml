@@ -1,57 +1,73 @@
-name: azureresumeapp
+name: Build and deploy Python project to Azure Function App - azureresumeapp
 
 on:
   push:
-    branches: ["main"]
+    branches:
+      - main
+  workflow_dispatch:
 
 env:
-  AZURE_FUNCTIONAPP_NAME: 'azureresumeapp'   # set this to your function app name on Azure
-  AZURE_FUNCTIONAPP_PACKAGE_PATH: '.'       # set this to the path to your function app project, defaults to the repository root
-  PYTHON_VERSION: '3.9'                     # set this to the python version to use (e.g. '3.6', '3.7', '3.8')
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: '.' # set this to the path to your web app project, defaults to the repository root
+  PYTHON_VERSION: '3.9'
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: 'Checkout GitHub Action'
-        uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Setup Python ${{ env.PYTHON_VERSION }} Environment
+      - name: Setup Python version
         uses: actions/setup-python@v2
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: 'Resolve Project Dependencies Using Pip'
-        shell: bash
+      - name: Create and start virtual environment
         run: |
-          pushd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt --target=".python_packages/lib/site-packages"
-          popd
+          python -m venv venv
+          source venv/bin/activate
 
-      - name: Login to Azure
-        uses: azure/login@v1
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Zip artifact for deployment
+        run: |
+          zip -r release.zip ./* -x venv/\*
+
+      - name: Upload artifact for deployment job
+        uses: actions/upload-artifact@v2
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          name: python-app
+          path: release.zip
 
-      - name: Deploy Azure Function App
-        run: |
-          az functionapp deployment source config-zip \
-            --resource-group azure-resume \
-            --name ${{ env.AZURE_FUNCTIONAPP_NAME }} \
-            --src-path your-deployment-package.zip \
-            --plan "/subscriptions/c9f0983a-0d54-44ff-93ce-6b1d3f2b7609/resourceGroups/azure-resume/providers/Microsoft.Web/serverfarms/SouthAfricaNorthLinuxDynamicPlan"
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: 'production'
+      url: ${{ steps.deploy-to-function.outputs.webapp-url }}
+    permissions:
+      id-token: write # This is required for requesting the JWT
 
-      - name: 'Run Azure Functions Action'
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v2
+        with:
+          name: python-app
+
+      - name: Unzip artifact for deployment
+        run: unzip -o release.zip
+
+      - name: Deploy to Azure Functions
         uses: Azure/functions-action@v1
-        id: fa
         with:
-          app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
+          app-name: azureresumeapp
           package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
-          publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }} # Remove publish-profile to use Azure RBAC
+          publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
           scm-do-build-during-deployment: true
           enable-oryx-build: true
+        env:
+          CosmosDB_URL: ${{ secrets.CosmosDB_URL }}
+          CosmosDB_Key: ${{ secrets.CosmosDB_Key }}
+          CosmosDB_Database: ${{ secrets.CosmosDB_Database }}
+          CosmosDB_Container: ${{ secrets.CosmosDB_Container }}
