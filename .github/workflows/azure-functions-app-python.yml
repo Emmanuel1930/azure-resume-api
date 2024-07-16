@@ -58,6 +58,13 @@ jobs:
       - name: Unzip artifact for deployment
         run: unzip -o release.zip
 
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
       - name: Deploy to Azure Functions
         uses: Azure/functions-action@v1
         with:
@@ -71,3 +78,4 @@ jobs:
           CosmosDB_Key: ${{ secrets.CosmosDB_Key }}
           CosmosDB_Database: ${{ secrets.CosmosDB_Database }}
           CosmosDB_Container: ${{ secrets.CosmosDB_Container }}
+
