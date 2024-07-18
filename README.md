@@ -118,3 +118,99 @@ When setting up an Azure Cosmos DB serverless API to store data in a table forma
 ### Conclusion
 
 Setting up an Azure Cosmos DB serverless API for storing data in table format involves careful planning of the partition key, management of the `id` field, and understanding of metadata handling. By following best practices and understanding these key concepts, you can effectively design scalable and efficient data storage solutions in Azure Cosmos DB. This approach ensures optimal performance and streamlined data management for your applications.
+
+
+### Step-by-Step Guide to Create a Function App and Azure Function with HTTP Trigger
+
+### 1. Log into Azure CLI and Set Subscription (if not already set)
+
+```bash
+bashCopy code
+az login
+az account set --subscription <subscription_id>
+
+```
+
+### 2. Create a Resource Group
+
+```bash
+bashCopy code
+az group create --name ResumeFunctionGroup --location <region>
+#you do not need to create another resource group if you have created intially for the Cosmos Bb
+#skip this step if so but remember the name name of your resource group
+```
+
+Replace `<region>` with your preferred Azure region, e.g., `centralus`.
+
+### Create a Storage Account (required for Function App)
+
+```bash
+bash code
+az storage account create --name resumestorage --location <region> --resource-group ResumeFunctionGroup --sku Standard_LRS
+#if you have created one intially for your Cosmos Db account skip this step
+#but rememeber the name of your storage account it is important
+
+```
+
+### 4. Create a Function App within the Resource Group
+
+```bash
+bash code
+az functionapp create --name ResumeFunctionApp --storage-account resumestorage --consumption-plan-location <region> --resource-group ResumeFunctionGroup --runtime python --runtime-version 3.10 --functions-version 4
+
+```
+
+- `-runtime` specifies the runtime environment (Python).
+- `-runtime-version` specifies the version of Python (3.10 in this case).
+- `-functions-version` specifies the version of Azure Functions runtime (4).
+
+### create an HTTP Trigger Function inside the Function App
+
+```bash
+bash code
+az functionapp function create --name ResumeHttpTrigger --namespace ResumeFunctions --authlevel anonymous --function-name ResumeHttpTrigger --resource-group ResumeFunctionGroup --runtime python --trigger-http --disable-app-insights
+
+
+```
+
+- `-authlevel` specifies the authentication level (anonymous allows public access).
+- `-function-name` specifies the name of the function.
+- `-trigger-http` creates an HTTP trigger function.
+  ## Modify Function Code
+Openfunction_app.py:
+
+In the newly created project, navigate to the GetResume function folder.
+
+Open function_app.py
+
+Replace the default code:
+
+Replace the default code with the following Python code to fetch data from CosmosDB:
+
+```python
+import azure.functions as func
+import logging
+import os
+from azure.cosmos import CosmosClient, exceptions
+from datetime import datetime
+import json
+
+# Environment variables
+COSMOS_DB_ENDPOINT = os.environ['COSMOS_DB_ENDPOINT']
+COSMOS_DB_KEY = os.environ['COSMOS_DB_KEY']
+COSMOS_DB_DATABASE = os.environ['COSMOS_DB_DATABASE']
+COSMOS_DB_CONTAINER = os.environ['COSMOS_DB_CONTAINER']
+
+# Initialize Cosmos DB client
+client = CosmosClient(COSMOS_DB_ENDPOINT, credential=COSMOS_DB_KEY)
+database = client.get_database_client(COSMOS_DB_DATABASE)
+container = database.get_container_client(COSMOS_DB_CONTAINER)
+# Define the function app
+app = func.FunctionApp()
+
+@app.function_name("GetResumeData")
+@app.route("getresumedata", methods=["GET"], auth_level=func.AuthLevel.ANONYMOUS)
+def main(req: func.HttpRequest) -> func.HttpResponse:
+    logging.info('Python HTTP trigger function processed a request.')
+
+```
