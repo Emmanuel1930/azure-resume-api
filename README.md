@@ -1,3 +1,63 @@
+### Crafting Your JSON Resume and Setting Up Azure Resources
+
+### 1. **Craft Your JSON Resume:**
+
+- Follow the schema provided by JSON Resume ([JSON Resume Schema](https://jsonresume.org/schema)) to structure your resume data in JSON format.
+- Ensure your JSON resume includes essential sections like basics, work experience, education, skills, etc.
+
+Example JSON Resume:
+
+```json
+jsonCopy code
+{
+  "basics": {
+    "name": "John Doe",
+    "label": "Software Developer",
+    "email": "john.doe@example.com",
+    "phone": "+1 (123) 456-7890",
+    ...
+  },
+  "work": [
+    {
+      "company": "ABC Inc.",
+      "position": "Senior Developer",
+      "startDate": "2018-01-01",
+      "endDate": "2022-06-30",
+      ...
+    },
+    ...
+  ],
+  "education": [
+    {
+      "institution": "XYZ University",
+      "area": "Computer Science",
+      "studyType": "Bachelor",
+      "startDate": "2014-09-01",
+      "endDate": "2018-05-31",
+      ...
+    },
+    ...
+  ],
+  ...
+}
+
+```
+
+
+### Setting Up Azure Resources:
+Resource Group Creation:
+
+Access the Azure portal (https://azure.microsoft.com/en-us/get-started/azure-portal)
+
+Search for "Resource groups" and click "create."
+
+Provide details like name (e.g., ResumeAPIGroup) and region (e.g., Central South Africa North)
+
+Confirm creation with "Review + Create" and then "Create."
+
+
+
+
 ### Creating Azure Cosmos DB Serverless API for Storing Data in Table Format
 
 When setting up an Azure Cosmos DB serverless API to store data in a table format, it's crucial to understand the intricacies involved, including defining the partition key, managing the ID field, and handling metadata. Here's a comprehensive guide to navigate through these aspects effectively.
