@@ -385,3 +385,28 @@ open the
     
 
 To avoid having issue with the authentification level i employ you to use that simple structure workflow for a beginner if you are new techies
+
+
+### **Clarification on Creating Azure Functions in Python**
+
+### **Creating Individual Functions vs. Function Apps**
+
+When developing Azure Functions in Python, it's important to distinguish between creating individual functions and creating a complete function app. Here's a quick guide to avoid common misconceptions:
+
+1. **Creating Individual Functions**:
+    - **Method**: If you use tools like func new or manually create a Python function directory (__init__.py inside a folder), Azure Functions will recognize this as a standalone function endpoint.
+    - **Main File**: The main file for individual functions is __init__.py. This file contains the function code and serves as the entry point for that specific function trigger.
+2. **Creating Function Apps**:
+    - **Method**: When you create a function app using tools like Azure CLI (az functionapp create) or through the Azure Portal, Azure sets up a complete function app structure.
+    - **Main Files**: Within the function app structure, each function directory will have a __init__.py file for non-HTTP triggers and a function_app.py for HTTP triggers by default.
+
+### **Common Mistakes to Avoid:**
+
+- **Misunderstanding Main Files**: Ensure you're aware of which main file (__init__.py for individual functions vs. function_app.py or __init__.py within a function app structure) corresponds to your development context.
+- **Function vs. Function App**: Understand the distinction between developing standalone functions and creating a cohesive function app structure.
+
+### **Conclusion:**
+
+By following these guidelines, you'll avoid confusion and ensure a clear development path when creating Azure Functions in Python.
+For a clearer meaning if you create a solely __init__.py inside a folder you will still have to deploy it inside a function app 
+but if you have done that initially before create the http trigger  function you will not have to do that then your main python file will be (function_app.py)
