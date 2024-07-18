@@ -6,11 +6,11 @@ When setting up an Azure Cosmos DB serverless API to store data in a table forma
 
 1. **Creating an Azure Cosmos DB Account**:
     - Begin by creating a new Azure Cosmos DB account in the Azure portal.
-    - Choose the appropriate API (such as SQL API) that supports storing data in JSON format.
-2. **Understanding the Partition Key**:
+    - Choose the appropriate API (such as SQL API but for this project it is NoSQL and Serverless) that supports storing data in JSON format.
+2. **Understanding the Partition Key**: ( for this project the patition key is /lang i used thst intentionally because my resume supportted mutiple langueges)
     - The partition key in Cosmos DB determines how data is distributed across physical partitions.
     - Choose a property that has a high cardinality and is frequently used in queries to ensure optimal performance.
-3. **Defining the ID Field**:
+3. **Defining the ID Field**: ( for this project the id is Resume)
     - Each document in Cosmos DB must have a unique identifier (`id` field).
     - It's essential to manage the generation of this identifier to avoid conflicts and ensure uniqueness across your dataset.
 
@@ -20,8 +20,8 @@ When setting up an Azure Cosmos DB serverless API to store data in a table forma
     - Define a structured JSON schema that represents your data model, including nested objects and arrays as needed.
     - Example:
         
-        ```json
-        jsonCopy code
+        ```json schema and also including the metafield for the cosmos table because without the metafield in the cosmos table the table will not be able to save
+        jsonCopy code and the cosmos tablemetafield
         {
           "id": "unique_id_here",
           "partitionKey": "your_partition_key_value",
