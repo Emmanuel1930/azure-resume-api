@@ -214,3 +214,174 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
 
 ```
+
+By following these steps, you can effectively create a Function App and an Azure Function with an HTTP trigger using Azure CLI. This setup allows you to develop and deploy serverless functions for your resume project, handling HTTP requests and returning JSON data dynamically. Adjust the example code and configuration as per your project's requirements and data source integration.
+
+```python
+import azure.functions as func
+import logging
+import os
+from azure.cosmos import CosmosClient, exceptions
+from datetime import datetime
+import json
+
+# Environment variables
+COSMOS_DB_ENDPOINT = os.environ['COSMOS_DB_ENDPOINT']
+COSMOS_DB_KEY = os.environ['COSMOS_DB_KEY']
+COSMOS_DB_DATABASE = os.environ['COSMOS_DB_DATABASE']
+COSMOS_DB_CONTAINER = os.environ['COSMOS_DB_CONTAINER']
+
+# Initialize Cosmos DB client
+client = CosmosClient(COSMOS_DB_ENDPOINT, credential=COSMOS_DB_KEY)
+database = client.get_database_client(COSMOS_DB_DATABASE)
+container = database.get_container_client(COSMOS_DB_CONTAINER)
+# Define the function app
+app = func.FunctionApp()
+
+@app.function_name("GetResumeData")
+@app.route("getresumedata", methods=["GET"], auth_level=func.AuthLevel.ANONYMOUS)
+def main(req: func.HttpRequest) -> func.HttpResponse:
+    logging.info('Python HTTP trigger function processed a request.')
+
+```
+
+### **Configure Local Settings**
+
+open the
+
+1.  `local.settings.json`:
+    - In the root of your function app project, open `local.settings.json`.
+    - Add the following content to the file:
+
+**COPY**
+
+```python
+    {
+        "IsEncrypted": false,
+        "Values": {
+            "AzureWebJobsFeatureFlags": "EnableWorkerIndexing",
+            "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+            "FUNCTIONS_WORKER_RUNTIME": "python",
+            "CosmosDB_URL": "<YOUR_COSMOS_DB_ENDPOINT>",
+            "CosmosDB_Key": "<YOUR_COSMOS_DB_KEY>",
+            "CosmosDB_Database": "<YOUR_COSMOSDB_DATABASE>",
+            "CosmosDB_Container": "<YOUR_COSMOSDB_CONTAINER>"
+        }
+    }
+
+```
+
+### **Test Locally**
+
+1. **Install Azure Functions Core Tools:**
+    - Install the Azure Functions Core Tools if you haven’t already.
+    - The installation instructions are [**here**](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local#v2).
+    - Open the terminal in VS Code.
+2. **Run the Function:**
+    
+    **COPY**
+    
+    **COPY**
+    
+    ```bash
+     func start
+    
+    ```
+    
+    - Test the function by navigating to it
+        
+        [**`http://localhost:7071/resumeapi?id=<value>`**](http://localhost:7071/resumeapi?id=1) in your browser or using a tool like Postman.
+        
+
+### **Deploy to Azure**
+
+1. **Deploy the Function:**
+    - In the Azure Functions extension in VS Code, right-click your function app project.
+    - Select "Deploy to Function App".
+    - Choose your subscription.
+    - deploy to the function app you have created initally.
+
+### **Step 5: Set Up GitHub Actions for CI/CD**
+
+1. **Create a GitHub Repository:**
+    - Initialize a new GitHub repository for your project.
+    - Push your local function app code to GitHub.
+2. **Create a GitHub Actions Workflow:**
+    - In your GitHub repository, create a `.github/workflows/deployment.yml` file with the following content:
+    
+    ```yaml
+      -name: Build and deploy Python project to Azure Function App - azureresumeapp
+    
+    on:
+      push:
+        branches:
+          - main
+      workflow_dispatch:
+    
+    env:
+      AZURE_FUNCTIONAPP_PACKAGE_PATH: '.' # set this to the path to your web app project, defaults to the repository root
+      PYTHON_VERSION: '3.10'
+    
+    jobs:
+      build:
+        runs-on: ubuntu-latest
+        steps:
+          - name: Checkout repository
+            uses: actions/checkout@v4
+    
+          - name: Setup Python version
+            uses: actions/setup-python@v2
+            with:
+              python-version: ${{ env.PYTHON_VERSION }}
+    
+          - name: Create and start virtual environment
+            run: |
+              python -m venv venv
+              source venv/bin/activate
+    
+          - name: Install dependencies
+            run: pip install -r requirements.txt
+    
+          - name: Zip artifact for deployment
+            run: |
+              zip -r release.zip ./* -x venv/\*
+    
+          - name: Upload artifact for deployment job
+            uses: actions/upload-artifact@v2
+            with:
+              name: python-app
+              path: release.zip
+    
+      deploy:
+        runs-on: ubuntu-latest
+        needs: build
+        environment:
+          name: 'production'
+          url: ${{ steps.deploy-to-function.outputs.webapp-url }}
+    
+        steps:
+          - name: Download artifact from build job
+            uses: actions/download-artifact@v2
+            with:
+              name: python-app
+    
+          - name: Unzip artifact for deployment
+            run: unzip -o release.zip
+    
+          - name: Deploy to Azure Functions
+            uses: Azure/functions-action@v1
+            with:
+              app-name: azureresumeapp
+              package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+              publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
+              scm-do-build-during-deployment: true
+              enable-oryx-build: true
+            env:
+              CosmosDB_URL: ${{ secrets.CosmosDB_URL }}
+              CosmosDB_Key: ${{ secrets.CosmosDB_Key }}
+              CosmosDB_Database: ${{ secrets.CosmosDB_Database }}
+              CosmosDB_Container: ${{ secrets.CosmosDB_Container
+    ```
+    
+
+To avoid having issue with the authentification level i employ you to use that simple structure workflow for a beginner if you are new techies
